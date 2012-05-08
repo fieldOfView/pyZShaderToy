@@ -20,47 +20,9 @@
 """
 
 from pyopengles import *
-
-# Create the context (globally accessible to methods)
-def reporterror():
-  e=opengles.glGetError()
-  if e:
-    print hex(e)
-    raise ValueError
-
-"""
-///
-// Create a shader object, load the shader source, and
-// compile the shader.
-//
-"""
-def LoadShader ( shader_src, shader_type = GL_VERTEX_SHADER ):
-  # Convert the src to the correct ctype, if not already done
-  if type(shader_src) == basestring:
-    shader_src = ctypes.c_char_p(shader_src)
-
-  # Create a shader of the given type
-  shader = opengles.glCreateShader(shader_type)
-  opengles.glShaderSource(shader, 1, ctypes.byref(shader_src), 0)
-  opengles.glCompileShader(shader)
-  
-  compiled = eglint()
-
-  # Check compiled status
-  opengles.glGetShaderiv ( shader, GL_COMPILE_STATUS, ctypes.byref(compiled) )
-  
-  if (compiled == 0):
-    print "Failed to compile shader '%s'" % shader_src 
-    #TODO - get log message via ctypes
-  else:
-    shdtyp = "{unknown}"
-    if shader_type == GL_VERTEX_SHADER:
-      shdtyp = "GL_VERTEX_SHADER"
-    elif shader_type == GL_FRAGMENT_SHADER:
-      shdtyp = "GL_FRAGMENT_SHADER"
-    print "Compiled %s shader: %s" % (shdtyp, shader_src)
-  
-  return shader
+from utils import import_obj, PerspProjMat, reporterror, \
+                  LoadShader, check_Linked_status, get_rotation_m, \
+                  wavefront_obj_to_vbo
 
 """
 ///
@@ -99,9 +61,9 @@ def Init():
   opengles.glLinkProgram ( programObject )
 
   # Check the link status
-  linked = eglint()
-  opengles.glGetProgramiv ( programObject, GL_LINK_STATUS, ctypes.byref(linked))
-
+  if not (check_Linked_status(programObject)):
+    raise Exception
+  
   opengles.glClearColor ( eglfloat(0.0), eglfloat(1.0), eglfloat(1.0), eglfloat(1.0) )
   return programObject
 
