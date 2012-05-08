@@ -82,7 +82,7 @@ def check_Linked_status(programObject):
     return False
   return True
 
-def rotate_m(angle, axis="x"):
+def get_rotation_m(angle, axis="x"):
   sinr = math.sin(angle)
   cosr = math.cos(angle)
 
