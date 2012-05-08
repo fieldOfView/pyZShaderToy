@@ -55,7 +55,7 @@ def check(e):
 
 class EGL(object):
 
-    def __init__(self):
+    def __init__(self, pref_width, pref_height):
         """Opens up the OpenGL library and prepares a window for display"""
         b = bcm.bcm_host_init()
         assert b==0
@@ -88,8 +88,14 @@ class EGL(object):
         width = eglint()
         height = eglint()
         s = bcm.graphics_get_display_size(0,ctypes.byref(width),ctypes.byref(height))
-        self.width = width
-        self.height = height
+        if pref_width and pref_height:
+            self.width = eglint(pref_width)
+            self.height = eglint(pref_height)
+            width = self.width
+            height = self.height
+        else:
+            self.width = width
+            self.height = height
         assert s>=0
         dispman_display = bcm.vc_dispmanx_display_open(0)
         dispman_update = bcm.vc_dispmanx_update_start( 0 )
