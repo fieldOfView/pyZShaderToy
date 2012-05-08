@@ -8,7 +8,9 @@ NORMAL_ARRAY = 2
 TEX_SIZE = 256
 
 from pyopengles import *
-from utils import import_obj, PerspProjMat, reporterror, LoadShader, check_Linked_status, get_rotation_m
+from utils import import_obj, PerspProjMat, reporterror, 
+                  LoadShader, check_Linked_status, get_rotation_m,
+                  wavefront_obj_to_vbo
 
 PROJ_M = eglfloats(PerspProjMat(45.0, 1.3333,-1.0,1000.0))
 
@@ -155,6 +157,10 @@ def create_triangle():
   return Vbo, 3
 
 def get_wavefront_obj(path):
+  Vbo, size, struct_width = wavefront_obj_to_vbo(path)
+  vertexStride = struct_width * 4
+  return Vbo, size
+  """
   f, verts, uvs, normals = import_obj(path)
   # make a suitable vbo object -> (vert) x,y,z (uv) u,v (norm) x,y,z
   vbo_data = []
@@ -185,7 +191,8 @@ def get_wavefront_obj(path):
   reporterror()
 
   return Vbo, len(f) * 3
-
+  """
+  
 """
 ///
 // Draw a VBO using the shader pair created in Init()

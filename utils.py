@@ -1,7 +1,7 @@
 # Common utilities
 
 from pyopengles import *
-from wavefront_obj import import_obj
+from wavefront_obj import import_obj, wavefront_obj_to_vbo
 
 def PerspProjMat(fov, aspect, znear, zfar):
   xymax = znear * math.tan(fov * (math.pi/360.0))
