@@ -201,6 +201,10 @@ def Draw(programObject, Vbo, idxs, rotation):
   opengles.glEnable(GL_CULL_FACE)
   opengles.glEnable(GL_DEPTH_TEST)
   reporterror()
+  
+  sinr = math.sin(rotation)
+  cosr = math.cos(rotation)
+  
   rot_mat = get_rotation_m(rotation, 'y')
   
   modelView = eglfloats(( cosr,   0,  sinr,
