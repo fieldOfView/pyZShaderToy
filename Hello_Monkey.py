@@ -147,7 +147,7 @@ def CreateTexture(programObject):
 
   for i in xrange(TEX_SIZE):
     for j in xrange(TEX_SIZE):
-      col = (255<<24) + ((255-j*2)<<16) + ((255-i)<<8) + (255-i*2)
+      col = (255<<24) + ((255-j)<<16) + ((255-i*2)<<8) + (255-i*2)
       test_tex[j*TEX_SIZE+i] = col
 
   opengles.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEX_SIZE, TEX_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_tex_p)
@@ -188,13 +188,13 @@ def create_triangle():
   return Vbo, 3
 
 def get_wavefront_obj(path):
-  f = import_obj(path)
+  f, verts, uvs, normals = import_obj(path)
   # make a suitable vbo object -> (vert) x,y,z (uv) u,v
   vbo_data = []
   for face in f:
     v1,v2,v3 = face['v']
     uv1, uv2, uv3 = face['uv']
-    vbo_data.extend(v1+uv1+v2+uv2+v3+uv3)
+    vbo_data.extend(verts[v1]+uvs[uv1]+verts[v2]+uvs[uv2]+verts[v3]+uvs[uv3])
 
   intVertices = eglfloats( vbo_data )
 
@@ -208,7 +208,7 @@ def get_wavefront_obj(path):
   reporterror()
 
   # Set the buffer's data
-  opengles.glBufferData(GL_ARRAY_BUFFER, len(f) * vertexStride, intVertices, GL_STATIC_DRAW)
+  opengles.glBufferData(GL_ARRAY_BUFFER, len(f) * 3 * vertexStride, intVertices, GL_STATIC_DRAW)
 
   # Unbind the VBO
   opengles.glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -218,13 +218,32 @@ def get_wavefront_obj(path):
 
 """
 ///
-// Draw a triangle using the shader pair created in Init()
+// Draw a VBO using the shader pair created in Init()
 //
 """
-def Draw(programObject, Vbo, idxs):
+def Draw(programObject, Vbo, idxs, rotation):
 
   # Clear the color buffer
   opengles.glClear ( GL_COLOR_BUFFER_BIT )
+
+  sinr = math.sin(rotation)
+  cosr = math.cos(rotation)
+
+  # left-handed - swap sin signs around for rh
+  xrotate = eglfloats(( 1,    0,     0, 0,
+                        0, cosr, -sinr, 0,
+                        0, sinr,  cosr, 0,
+                        0,    0,     0, 1 ))
+
+  yrotate = eglfloats(( cosr,   0,  sinr, 0,
+                        0,      1,     0, 0,
+                        -sinr,  0,  cosr, 0,
+                        0,      0,     0, 1 ))
+
+  zrotate = eglfloats(( cosr,  -sinr,  0, 0,
+                        sinr,   cosr,  0, 0,
+                           0,      0,  1, 0,
+                           0,      0,  0, 1 ))
 
   afIdentity = eglfloats(( 1,0,0,0,
                            0,1,0,0,
@@ -234,7 +253,8 @@ def Draw(programObject, Vbo, idxs):
   location = opengles.glGetUniformLocation(programObject, "myPMVMatrix")
   reporterror()
 
-  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, afIdentity)
+  #opengles.glUniformMatrix4fv(location, 1, GL_FALSE, afIdentity)
+  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, yrotate)
 
   opengles.glBindBuffer(GL_ARRAY_BUFFER, Vbo)
 
@@ -251,14 +271,10 @@ def Draw(programObject, Vbo, idxs):
 
   reporterror()
   
-  opengles.glDisable(GL_CULL_FACE)
-  reporterror()
-
   # Draws a non-indexed triangle array
   opengles.glDrawArrays(GL_TRIANGLES, 0, idxs);
 
   reporterror()
-  
   
   opengles.glBindBuffer(GL_ARRAY_BUFFER, 0);
   reporterror()
@@ -266,18 +282,31 @@ def Draw(programObject, Vbo, idxs):
 
 if __name__ == "__main__":
   import sys
+  path = "monkey.obj"
   w,h = 640,480
   if len(sys.argv) == 3:
     w,h = int(sys.argv[1]), int(sys.argv[2])
+  elif len(sys.argv) == 2:
+    path = sys.argv[1]
   egl = EGL(w,h)
   programObj = Init()
   CreateTexture(programObj)
   #Vbo, idxs = create_triangle()
-  Vbo, idxs = get_wavefront_obj("monkey.obj")
-  nooffaces = 0
+  Vbo, idxs = get_wavefront_obj(path)
+  rotation = 0
+  noofverts = 0
+  noofverts_step = idxs / 100
+  if noofverts_step == 0:
+    noofverts_step = 1
+  rotatestep = math.pi / 120
   while 1:
-    nooffaces += 3
-    Draw(programObj, Vbo, nooffaces)
+    noofverts += noofverts_step
+    rotation += rotatestep
+    rotation %= math.pi * 2
+    if (noofverts >= idxs):
+      Draw(programObj, Vbo, idxs, rotation)
+    else:
+      Draw(programObj, Vbo, noofverts, rotation)
     openegl.eglSwapBuffers(egl.display, egl.surface)
     time.sleep(0.02)
-    nooffaces %= idxs
+    noofverts %= idxs * 3

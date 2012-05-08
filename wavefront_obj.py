@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def import_obj(path):
+def import_obj(path, combine=True):
     name = path.split('\\')[-1].split('/')[-1]
     verts = []
     uvs = []
@@ -39,14 +39,15 @@ def import_obj(path):
             line = file.next().strip()
         except StopIteration:
             line = None
-    return faces
+    print "Loaded %s vertices, with %s tex coords and %s normals -- %s faces" % (len(verts), len(uvs), len(normals), len(faces))
+    return faces, verts, uvs, normals
 
 
 def _face_vertex_only(line, file, faces, verts):
     while(line):
         words = line.split()
         f = {}
-        f['v'] = (verts[int(word[1])-1], verts[int(word[2])-1],verts[int(word[3])-1])
+        f['v'] = (int(word[1])-1, int(word[2])-1,int(word[3])-1)
         faces.append(f)
         try:
             line = file.next().strip()
@@ -61,8 +62,8 @@ def _face_vertex_uvs(line, file, faces, verts, uvs):
         v,u = [],[]
         for wridx in words[1:]:
             vertidx, uvidx = wridx.split("/")
-            v.append(verts[int(vertidx)-1])
-            u.append(uvs[int(uvidx)-1])
+            v.append(int(vertidx)-1)
+            u.append(int(uvidx)-1)
         f['v'] = v
         f['uv'] = u
         faces.append(f)
@@ -79,10 +80,10 @@ def _face_vertex_uvs_normals(line, file, faces, verts, uvs, normals):
         v,u,n = [],[],[]
         for wridx in words[1:]:
             vertidx, uvidx, normidx = wridx.split("/")
-            v.append(verts[int(vertidx)-1])
-            n.append(normals[int(normidx)-1])
+            v.append(int(vertidx)-1)
+            n.append(int(normidx)-1)
             if uvidx != '':
-                u.append(uvs[int(uvidx)-1])
+                u.append(int(uvidx)-1)
         f['v'] = v
         if u:
             f['uv'] = u
