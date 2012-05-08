@@ -7,54 +7,9 @@ TEXCOORD_ARRAY = 1
 TEX_SIZE = 128
 
 from pyopengles import *
+from utils import reporterror, LoadShader, check_Linked_status
 
 vertexStride = 5 * 4        # 5 * sizeof(GLfloat)
-
-# Create the context (globally accessible to methods)
-def reporterror():
-  e=opengles.glGetError()
-  if e:
-    print hex(e)
-    raise ValueError
-
-"""
-///
-// Create a shader object, load the shader source, and
-// compile the shader.
-//
-"""
-def LoadShader ( shader_src, shader_type = GL_VERTEX_SHADER ):
-  # Convert the src to the correct ctype, if not already done
-  if type(shader_src) == basestring:
-    shader_src = ctypes.c_char_p(shader_src)
-
-  # Create a shader of the given type
-  shader = opengles.glCreateShader(shader_type)
-  opengles.glShaderSource(shader, 1, ctypes.byref(shader_src), 0)
-  opengles.glCompileShader(shader)
-  
-  compiled = eglint()
-
-  # Check compiled status
-  opengles.glGetShaderiv ( shader, GL_COMPILE_STATUS, ctypes.byref(compiled) )
-
-  if (compiled.value == 0):
-    print "Failed to compile shader '%s'" % shader_src 
-    loglength = eglint()
-    charswritten = eglint()
-    opengles.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-    logmsg = ctypes.c_char_p(" "*loglength.value)
-    opengles.glGetShaderInfoLog(shader, loglength, ctypes.byref(charswritten), logmsg)
-    print logmsg.value
-  else:
-    shdtyp = "{unknown}"
-    if shader_type == GL_VERTEX_SHADER:
-      shdtyp = "GL_VERTEX_SHADER"
-    elif shader_type == GL_FRAGMENT_SHADER:
-      shdtyp = "GL_FRAGMENT_SHADER"
-    print "Compiled %s shader: %s" % (shdtyp, shader_src)
-  
-  return shader
 
 """
 ///
@@ -104,19 +59,9 @@ def Init():
   reporterror()
 
   # Check the link status
-  linked = eglint()
-  opengles.glGetProgramiv ( programObject, GL_LINK_STATUS, ctypes.byref(linked))
-  reporterror()
-
-  if (linked.value == 0):
-    print "Linking failed!"
-    loglength = eglint()
-    charswritten = eglint()
-    opengles.glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-    logmsg = ctypes.c_char_p(" "*loglength.value)
-    opengles.glGetProgramInfoLog(programObject, loglength, ctypes.byref(charswritten), logmsg)
-    print logmsg.value
-    
+  if not (check_Linked_status(programObject)):
+    raise Exception
+  
   # Use the program object
   opengles.glUseProgram( programObject )
   reporterror()
@@ -183,14 +128,14 @@ def CreateTexture(programObject):
   reporterror()
   
 
-  return Vbo, afVertices
+  return Vbo
 
 """
 ///
 // Draw a triangle using the shader pair created in Init()
 //
 """
-def Draw(programObject, Vbo, Verts):
+def Draw(programObject, Vbo):
 
   # Clear the color buffer
   opengles.glClear ( GL_COLOR_BUFFER_BIT )
@@ -234,8 +179,8 @@ if __name__ == "__main__":
     w,h = int(sys.argv[1]), int(sys.argv[2])
   egl = EGL(w,h)
   programObj = Init()
-  Vbo, pVert = CreateTexture(programObj)
+  Vbo = CreateTexture(programObj)
   while 1:
-    Draw(programObj, Vbo, pVert)
+    Draw(programObj, Vbo)
     openegl.eglSwapBuffers(egl.display, egl.surface)
     time.sleep(0.02)

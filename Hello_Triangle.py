@@ -20,9 +20,7 @@
 """
 
 from pyopengles import *
-from utils import import_obj, PerspProjMat, reporterror, \
-                  LoadShader, check_Linked_status, get_rotation_m, \
-                  wavefront_obj_to_vbo
+from utils import reporterror, LoadShader, check_Linked_status
 
 """
 ///
