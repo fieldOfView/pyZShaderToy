@@ -8,7 +8,7 @@ NORMAL_ARRAY = 2
 TEX_SIZE = 256
 
 from pyopengles import *
-from utils import import_obj, PerspProjMat, reporterror, LoadShader, check_Linked_status
+from utils import import_obj, PerspProjMat, reporterror, LoadShader, check_Linked_status, get_rotation_m
 
 PROJ_M = eglfloats(PerspProjMat(45.0, 1.3333,-1.0,1000.0))
 
@@ -201,14 +201,14 @@ def Draw(programObject, Vbo, idxs, rotation):
   opengles.glEnable(GL_CULL_FACE)
   opengles.glEnable(GL_DEPTH_TEST)
   reporterror()
-  rotation_mat = rotate_m(rotation, 'y')
+  rot_mat = get_rotation_m(rotation, 'y')
   
   modelView = eglfloats(( cosr,   0,  sinr,
                           0,      1,     0,
                           -sinr,  0,  cosr ))
 
   location = opengles.glGetUniformLocation(programObject, "myPMVMatrix")
-  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, rotation_mat)
+  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, rot_mat)
   reporterror()
 
   location = opengles.glGetUniformLocation(programObject, "myModelViewIT")
@@ -248,12 +248,15 @@ def Draw(programObject, Vbo, idxs, rotation):
 
 if __name__ == "__main__":
   import sys
-  path = "monkey.obj"
+  path = "examples_obj/monkey.obj"
   w,h = 640,480
   if len(sys.argv) == 3:
     w,h = int(sys.argv[1]), int(sys.argv[2])
   elif len(sys.argv) == 2:
     path = sys.argv[1]
+  elif len(sys.argv) == 4:
+    w,h = int(sys.argv[1]), int(sys.argv[2])
+    path = sys.argv[3]
   egl = EGL(w,h)
   programObj = Init()
   CreateTexture(programObj)
