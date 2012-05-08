@@ -1,7 +1,7 @@
 # Common utilities
 
 from pyopengles import *
-from wavefront_obj import import_obj, wavefront_obj_to_vbo
+from wavefront_obj import import_obj
 
 def PerspProjMat(fov, aspect, znear, zfar):
   xymax = znear * math.tan(fov * (math.pi/360.0))
@@ -107,3 +107,47 @@ afIdentity_m = eglfloats(( 1,0,0,0,
                          0,1,0,0,
                          0,0,1,0,
                          0,0,0,1 ))
+
+
+def wavefront_obj_to_vbo(path, order=("v","uv","n")):
+  f, verts, uvs, normals = import_obj(path)
+  mapping = {'v':verts, 'uv':uvs, 'n':normals}
+  # make a suitable vbo object -> (vert) x,y,z (uv) u,v (norm) x,y,z by default
+  vbo_data = []
+  for face in f:
+    pck = []
+    for o in order:
+      pck.append([mapping[o][x] for x in face[o]])
+    m,n = [],[]
+    map(lambda x: m.extend(x), zip(*pck))
+    map(lambda x: n.extend(x), m)
+    vbo_data.extend(n)
+    
+  intVertices = eglfloats( vbo_data )
+
+  Vbo = eglint()
+
+  opengles.glGenBuffers(1, ctypes.byref(Vbo))
+  reporterror()
+
+  opengles.glBindBuffer(GL_ARRAY_BUFFER, Vbo)
+
+  reporterror()
+  
+  struct_width = 0
+  if "v" in order:
+    struct_width += 3
+  if "uv" in order:
+    struct_width += 2
+  if "n" in order:
+    struct_width += 3
+
+  # Set the buffer's data
+  opengles.glBufferData(GL_ARRAY_BUFFER, len(f) * 3 * struct_width * 4, intVertices, GL_STATIC_DRAW)   # 4 -> GL_FLOAT
+
+  # Unbind the VBO
+  opengles.glBindBuffer(GL_ARRAY_BUFFER, 0)
+  reporterror()
+
+  return Vbo, len(f) * 3, struct_width
+
