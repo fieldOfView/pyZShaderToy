@@ -259,7 +259,7 @@ def Draw(programObject, Vbo, idxs, rotation):
 
 if __name__ == "__main__":
   import sys
-  path = "examples_obj/monkey.obj"
+  path = "example_objs/monkey.obj"
   w,h = 640,480
   if len(sys.argv) == 3:
     w,h = int(sys.argv[1]), int(sys.argv[2])

@@ -55,7 +55,7 @@ def check(e):
 
 class EGL(object):
 
-    def __init__(self, pref_width, pref_height):
+    def __init__(self, pref_width=None, pref_height=None):
         """Opens up the OpenGL library and prepares a window for display"""
         b = bcm.bcm_host_init()
         assert b==0
