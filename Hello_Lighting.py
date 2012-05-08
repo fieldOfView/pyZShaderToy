@@ -8,80 +8,11 @@ NORMAL_ARRAY = 2
 TEX_SIZE = 256
 
 from pyopengles import *
-from wavefront_obj import import_obj
-
-def PerspProjMat(fov, aspect, znear, zfar):
-  xymax = znear * math.tan(fov * (math.pi/360.0))
-  ymin = -xymax
-  xmin = -xymax
-
-  width = xymax - xmin
-  height = xymax - ymin
-
-  depth = zfar - znear
-  q = -(zfar + znear) / depth
-  qn = -2 * (zfar * znear) / depth
-
-  w = 2 * znear / width
-  w = w / aspect
-  h = 2 * znear / height
-
-  m = ( w,0,0,0,
-        0,h,0,0,
-        0,0,q,-1,
-        0,0,qn,0)
-  return m
-
+from utils import import_obj, PerspProjMat, reporterror, LoadShader, check_Linked_status
 
 PROJ_M = eglfloats(PerspProjMat(45.0, 1.3333,-1.0,1000.0))
 
 vertexStride = 8 * 4        # 5 * sizeof(GLfloat) -> vert x,y,z uv u,v
-
-# Create the context (globally accessible to methods)
-def reporterror():
-  e=opengles.glGetError()
-  if e:
-    print hex(e)
-    raise ValueError
-
-"""
-///
-// Create a shader object, load the shader source, and
-// compile the shader.
-//
-"""
-def LoadShader ( shader_src, shader_type = GL_VERTEX_SHADER ):
-  # Convert the src to the correct ctype, if not already done
-  if type(shader_src) == basestring:
-    shader_src = ctypes.c_char_p(shader_src)
-
-  # Create a shader of the given type
-  shader = opengles.glCreateShader(shader_type)
-  opengles.glShaderSource(shader, 1, ctypes.byref(shader_src), 0)
-  opengles.glCompileShader(shader)
-  
-  compiled = eglint()
-
-  # Check compiled status
-  opengles.glGetShaderiv ( shader, GL_COMPILE_STATUS, ctypes.byref(compiled) )
-
-  if (compiled.value == 0):
-    print "Failed to compile shader '%s'" % shader_src 
-    loglength = eglint()
-    charswritten = eglint()
-    opengles.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-    logmsg = ctypes.c_char_p(" "*loglength.value)
-    opengles.glGetShaderInfoLog(shader, loglength, ctypes.byref(charswritten), logmsg)
-    print logmsg.value
-  else:
-    shdtyp = "{unknown}"
-    if shader_type == GL_VERTEX_SHADER:
-      shdtyp = "GL_VERTEX_SHADER"
-    elif shader_type == GL_FRAGMENT_SHADER:
-      shdtyp = "GL_FRAGMENT_SHADER"
-    print "Compiled %s shader: %s" % (shdtyp, shader_src)
-  
-  return shader
 
 """
 ///
@@ -144,19 +75,9 @@ def Init():
   reporterror()
 
   # Check the link status
-  linked = eglint()
-  opengles.glGetProgramiv ( programObject, GL_LINK_STATUS, ctypes.byref(linked))
-  reporterror()
-
-  if (linked.value == 0):
-    print "Linking failed!"
-    loglength = eglint()
-    charswritten = eglint()
-    opengles.glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-    logmsg = ctypes.c_char_p(" "*loglength.value)
-    opengles.glGetProgramInfoLog(programObject, loglength, ctypes.byref(charswritten), logmsg)
-    print logmsg.value
-    
+  if not (check_Linked_status(programObject)):
+    raise Exception
+  
   # Use the program object
   opengles.glUseProgram( programObject )
   reporterror()
@@ -170,7 +91,6 @@ def Init():
   return programObject
 
 def CreateTexture(programObject):
-  
   # Allocate one tex handle
   tex_handle = eglint()
   opengles.glGenTextures(1, ctypes.byref(tex_handle))
@@ -281,37 +201,14 @@ def Draw(programObject, Vbo, idxs, rotation):
   opengles.glEnable(GL_CULL_FACE)
   opengles.glEnable(GL_DEPTH_TEST)
   reporterror()
-
-  sinr = math.sin(rotation)
-  cosr = math.cos(rotation)
-
-  # left-handed - swap sin signs around for rh
-  xrotate = eglfloats(( 1,    0,     0, 0,
-                        0, cosr, -sinr, 0,
-                        0, sinr,  cosr, 0,
-                        0,    0,     0, 1 ))
-
-  yrotate = eglfloats(( cosr,   0,  sinr, 0,
-                        0,      1,     0, 0,
-                        -sinr,  0,  cosr, 0,
-                        0,      0,     0, 1 ))
-
-  zrotate = eglfloats(( cosr,  -sinr,  0, 0,
-                        sinr,   cosr,  0, 0,
-                           0,      0,  1, 0,
-                           0,      0,  0, 1 ))
-
-  afIdentity = eglfloats(( 1,0,0,0,
-                           0,1,0,0,
-                           0,0,1,0,
-                           0,0,0,1 ))
-
+  rotation_mat = rotate_m(rotation, 'y')
+  
   modelView = eglfloats(( cosr,   0,  sinr,
                           0,      1,     0,
                           -sinr,  0,  cosr ))
 
   location = opengles.glGetUniformLocation(programObject, "myPMVMatrix")
-  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, yrotate)
+  opengles.glUniformMatrix4fv(location, 1, GL_FALSE, rotation_mat)
   reporterror()
 
   location = opengles.glGetUniformLocation(programObject, "myModelViewIT")
