@@ -1,6 +1,8 @@
 
 from pyopengles import *
 
+import pymouse
+
 class demo():
 
     def showlog(self,shader):

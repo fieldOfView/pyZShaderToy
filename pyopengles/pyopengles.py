@@ -198,7 +198,7 @@ class EGL(object):
         opengles.glGetProgramInfoLog(program,N,ctypes.byref(loglen),ctypes.byref(log))
         print log.value
 
-    def load_shader ( shader_src, shader_type = GL_VERTEX_SHADER, verbose = False ):
+    def load_shader ( self, shader_src, shader_type = GL_VERTEX_SHADER, verbose = False ):
         # Convert the src to the correct ctype, if not already done
         if type(shader_src) == basestring:
             shader_src = ctypes.c_char_p(shader_src)
@@ -237,8 +237,8 @@ class EGL(object):
 
     def get_program(vertex_shader_src, fragment_shader_src, bindings=[], verbose=False):
         # Load the vertex/fragment shaders (can throw a ShaderCompilationFailed exception)
-        vertexShader = LoadShader ( vertex_shader_src, GL_VERTEX_SHADER, verbose )
-        fragmentShader = LoadShader ( fragment_shader_src, GL_FRAGMENT_SHADER, verbose )
+        vertexShader = self.load_shader ( vertex_shader_src, GL_VERTEX_SHADER, verbose )
+        fragmentShader = self.load_shader ( fragment_shader_src, GL_FRAGMENT_SHADER, verbose )
         self._check_glerror()
 
         # Create the program object
