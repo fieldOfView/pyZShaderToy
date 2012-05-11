@@ -179,7 +179,7 @@ class EGL(object):
     def _check_glerror(self):
         e=opengles.glGetError()
         if e:
-            raise GLError(hex(e))
+            raise GLError(e)
         return
 
     def _show_shader_log(self, shader):

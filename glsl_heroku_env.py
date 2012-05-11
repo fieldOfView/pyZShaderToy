@@ -143,9 +143,17 @@ def run_shader(frag_shader):
       draw(programObject, (time.time() - start), m, r, Vbo)
       time.sleep(0.02)
   except KeyboardInterrupt:
+    print "Finishing"
     m.finished = True
+    opengles.glClearColor ( eglfloat(0.0), eglfloat(0.0), eglfloat(0.0), eglfloat(0.0) )
+    opengles.glClear ( GL_COLOR_BUFFER_BIT )
+    openegl.eglSwapBuffers(e.display, e.surface)
     return
   except Exception, error:
+    print "Error - finishing"
+    opengles.glClearColor ( eglfloat(0.0), eglfloat(0.0), eglfloat(0.0), eglfloat(0.0) )
+    opengles.glClear ( GL_COLOR_BUFFER_BIT )
+    openegl.eglSwapBuffers(e.display, e.surface)
     m.finished = True
     raise error
     

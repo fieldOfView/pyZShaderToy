@@ -34,7 +34,8 @@ class MouseThread ( threading.Thread ):
             if self.y<0: self.y=0
             self.x=min(self.x,self.width)
             self.y=min(self.y,self.height)
-            print self.x,self.y
+            if self.finished:
+                break
 
 def start_mouse():
     """Start a thread to read the PS2 mouse stream.
