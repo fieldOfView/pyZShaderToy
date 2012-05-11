@@ -3,6 +3,10 @@ Raspberry Pi 3d demo.
 
 This uses the peterderivaz's bindings to the EGL and OpenGLES libraries to draw 3d graphics from inside Python with hardware acceleration (via ctypes and ctypes.CDLL)
 
+## Running ##
+
+The scripts should Just Work (tested on the latest debian image). If you are on Arch, you may have to add the "/opt/vc/lib" directory to your ld.conf so that ldd can find them.
+
 ## Demo Scripts ##
 
 I wrote the 'Hello_*' scripts as a learning tool for myself and they are quite rough around the edges. I would appreciate any feedback/patches to make them better!
