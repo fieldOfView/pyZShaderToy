@@ -28,8 +28,8 @@ void main( void ) {
 	gl_FragColor = vec4(fract(-log(s)*10.),fract(-log(s)*1.),fract(-log(s)/10.),1.);
 }"""
 
-#e = EGL() # fullscreen, RGBA
-e=EGL(pref_width = 640, pref_height=480)
+e = EGL() # fullscreen, RGBA
+#e=EGL(pref_width = 640, pref_height=480)
 
 surface_tris = eglfloats( (  - 1.0, - 1.0, 1.0, 
                              - 1.0, 1.0, 1.0, 
@@ -157,3 +157,13 @@ def run_shader(frag_shader):
     m.finished = True
     raise error
     
+if __name__ == "__main__":
+  import sys
+  if len(sys.argv) == 2:
+    try:
+      glsl_file = open(sys.argv[1], "r")
+      frag = glsl_file.read()
+      run_shader(frag)
+    except IOError:
+      print "No such file"
+
