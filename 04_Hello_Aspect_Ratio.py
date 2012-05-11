@@ -21,6 +21,18 @@ vertex_shader = """
     attribute vec4 vPosition;
     
     uniform float rotation;
+    uniform vec3 move;
+    uniform vec3 rescale;
+
+    mat4 translate(float x, float y, float z)
+    {
+    return mat4(
+        vec4(1.0, 0.0, 0.0, 0.0),
+        vec4(0.0, 1.0, 0.0, 0.0),
+        vec4(0.0, 0.0, 1.0, 0.0),
+        vec4(x,   y,   z,   1.0)
+        );
+    }
     
     mat4 rotate_z(float theta)
     {
@@ -32,9 +44,21 @@ vertex_shader = """
         );
     }
 
+    mat4 scale(float x, float y, float z)
+    {
+    return mat4(
+        vec4(   x, 0.0, 0.0, 0.0),
+        vec4( 0.0,   y, 0.0, 0.0),
+        vec4( 0.0, 0.0,   z, 0.0),
+        vec4( 0.0, 0.0, 0.0, 1.0)
+        );
+    }
     void main()
     {
-        gl_Position = rotate_z(rotation) * vPosition;
+        gl_Position = translate(move.x, move.y, move.z)
+                      * rotate_z(rotation)
+                      * scale(rescale.x, rescale.y, rescale.z)
+                      * vPosition;
     }
 """
 
@@ -52,7 +76,7 @@ binding = ((0, 'vPosition'),)
 program = ctx.get_program(vertex_shader, fragment_shader, binding)
 
 opengles.glClearColor(eglfloat(0.1), eglfloat(0.1), eglfloat(0.1),eglfloat(1.0))
-
+  
 triangle_vertices = eglfloats(( -0.433, -0.25, 1.0,
                                  0.0,  0.5, 1.0,
                                  0.433, -0.25, 1.0 ))
@@ -65,10 +89,17 @@ openegl.glViewport(0,0,ctx.width, ctx.height)
 
 # Find the location of the 'uniform' rotation:
 rot_loc = opengles.glGetUniformLocation(program, "rotation")
+move_loc = opengles.glGetUniformLocation(program, "move")
+rescale_loc = opengles.glGetUniformLocation(program, "rescale")
 
 rotation = 0.0
+move = [0.0, 0.0, 0.0]
 
-print "Controls: \nm - Rotate clockwise, \nn - rotate counter-clockwise, \nq - Quit\n\nStarts in 3 seconds..."
+# Adjust the scaling to match the display's aspect ratio:
+rescale = [ctx.width.value / float(ctx.height.value), 1.0, 1.0] 
+
+print "Controls: \nm - Rotate clockwise, n - rotate counter-clockwise, \n"
+print "Movement: a - left,  d - right,  w - up, s - down\n\nq - Quit\n\nStarts in 3 seconds..."
 
 time.sleep(3)
 
@@ -84,15 +115,35 @@ try:
         if r:
             c = sys.stdin.read(1)
             if c.lower() == "m":
-                rotation -= 0.05
-            elif c.lower() == "n":
+                # rotate
                 rotation += 0.05
+            elif c.lower() == "n": 
+                # rotate
+                rotation -= 0.05
+            elif c.lower() == "a":
+                # move left
+                move[0] = move[0] - 0.1
+            elif c.lower() == "d":
+                # move right
+                move[0] = move[0] + 0.1
+            elif c.lower() == "s":
+                # move down
+                move[1] -= 0.1
+            elif c.lower() == "w":
+                # move up
+                move[1] += 0.1
             elif c.lower() == "q":
                 # quit
                 running = False
 
+        # sets the rescale
+        opengles.glUniform3f(rescale_loc, eglfloat( rescale[0] ), eglfloat( rescale[1]), eglfloat(rescale[2]))
+
         # set rotation:
         opengles.glUniform1f(rot_loc, eglfloat(rotation))
+
+        # set translation
+        opengles.glUniform3f(move_loc, eglfloat( move[0] ), eglfloat(move[1]), eglfloat(move[2]))
 
         # Load the vertex data
         opengles.glVertexAttribPointer ( 0, 3, GL_FLOAT, GL_FALSE, 0, triangle_vertices )

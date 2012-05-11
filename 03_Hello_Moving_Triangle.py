@@ -66,12 +66,15 @@ program = ctx.get_program(vertex_shader, fragment_shader, binding)
 
 opengles.glClearColor(eglfloat(0.1), eglfloat(0.1), eglfloat(0.1),eglfloat(1.0))
 
-triangle_vertices = eglfloats(( -0.5, -0.5, 1.0,
+triangle_vertices = eglfloats(( -0.433, -0.25, 1.0,
                                  0.0,  0.5, 1.0,
-                                 0.5, -0.5, 1.0 ))
+                                 0.433, -0.25, 1.0 ))
 
 # Use the program object
 opengles.glUseProgram ( program )
+
+# Set the Viewport: (NB openegl, not opengles)
+openegl.glViewport(0,0,ctx.width, ctx.height)
 
 # Find the location of the 'uniform' rotation:
 rot_loc = opengles.glGetUniformLocation(program, "rotation")
@@ -79,6 +82,11 @@ move_loc = opengles.glGetUniformLocation(program, "move")
 
 rotation = 0.0
 move = [0.0, 0.0, 0.0]
+
+print "Controls: \nm - Rotate clockwise, n - rotate counter-clockwise, \n"
+print "Movement: a - left,  d - right,  w - up, s - down\n\nq - Quit\n\nStarts in 3 seconds..."
+
+time.sleep(3)
 
 try:
     running = True
@@ -88,7 +96,7 @@ try:
 
         # Update then draw:
         # is there a keypress to read?
-        r, w, e = select.select([fd], [], [])
+        r, w, e = select.select([fd], [], [], 0.02)
         if r:
             c = sys.stdin.read(1)
             if c.lower() == "m":
@@ -125,7 +133,6 @@ try:
 
         opengles.glDrawArrays ( GL_TRIANGLES, 0, 3 )
         openegl.eglSwapBuffers(ctx.display, ctx.surface)
-        time.sleep(0.02)
 finally:
     termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
     fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
