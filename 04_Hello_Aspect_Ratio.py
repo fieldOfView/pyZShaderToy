@@ -55,9 +55,9 @@ vertex_shader = """
     }
     void main()
     {
-        gl_Position = translate(move.x, move.y, move.z)
+        gl_Position = scale(rescale.x, rescale.y, rescale.z)
+                      * translate(move.x, move.y, move.z)
                       * rotate_z(rotation)
-                      * scale(rescale.x, rescale.y, rescale.z)
                       * vPosition;
     }
 """
@@ -76,10 +76,10 @@ binding = ((0, 'vPosition'),)
 program = ctx.get_program(vertex_shader, fragment_shader, binding)
 
 opengles.glClearColor(eglfloat(0.1), eglfloat(0.1), eglfloat(0.1),eglfloat(1.0))
-  
-triangle_vertices = eglfloats(( -0.433, -0.25, 1.0,
-                                 0.0,  0.5, 1.0,
-                                 0.433, -0.25, 1.0 ))
+
+triangle_vertices = eglfloats(( -0.866, -0.5, 1.0,
+                                 0.0,  1.0, 1.0,
+                                 0.866, -0.5, 1.0 ))
 
 # Use the program object
 opengles.glUseProgram ( program )
@@ -96,7 +96,7 @@ rotation = 0.0
 move = [0.0, 0.0, 0.0]
 
 # Adjust the scaling to match the display's aspect ratio:
-rescale = [ctx.width.value / float(ctx.height.value), 1.0, 1.0] 
+rescale = [0.5, 0.5*ctx.width.value / float(ctx.height.value), 0.5]
 
 print "Controls: \nm - Rotate clockwise, n - rotate counter-clockwise, \n"
 print "Movement: a - left,  d - right,  w - up, s - down\n\nq - Quit\n\nStarts in 3 seconds..."
@@ -116,10 +116,10 @@ try:
             c = sys.stdin.read(1)
             if c.lower() == "m":
                 # rotate
-                rotation += 0.05
+                rotation -= 0.05
             elif c.lower() == "n": 
                 # rotate
-                rotation -= 0.05
+                rotation += 0.05
             elif c.lower() == "a":
                 # move left
                 move[0] = move[0] - 0.1

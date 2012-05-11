@@ -53,9 +53,9 @@ program = ctx.get_program(vertex_shader, fragment_shader, binding)
 
 opengles.glClearColor(eglfloat(0.1), eglfloat(0.1), eglfloat(0.1),eglfloat(1.0))
 
-triangle_vertices = eglfloats(( -0.433, -0.25, 1.0,
-                                 0.0,  0.5, 1.0,
-                                 0.433, -0.25, 1.0 ))
+triangle_vertices = eglfloats(( -0.866, -0.5, 1.0,
+                                 0.0,  1.0, 1.0,
+                                 0.866, -0.5, 1.0 ))
 
 # Use the program object
 opengles.glUseProgram ( program )
