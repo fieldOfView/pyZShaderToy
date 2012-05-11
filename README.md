@@ -1,30 +1,33 @@
-== Raspberry Pi 3d demo. ==
+Raspberry Pi 3d demo.
+=====================
 
 This uses the peterderivaz's bindings to the EGL and OpenGLES libraries to draw 3d graphics from inside Python with hardware acceleration (via ctypes and ctypes.CDLL)
 
+## Demo Scripts ##
+
 I wrote the 'Hello_*' scripts as a learning tool for myself and they are quite rough around the edges. I would appreciate any feedback/patches to make them better!
 
-=== 01_Hello_Triangle.py ===
+### 01_Hello_Triangle.py ###
 
 A large red triangle.
 
 This script shows the minimum setup required to use OpenGL ES 2.0, from getting a display, loading shaders, linking and creating a (small) Vertex Buffer Object (VBO) for the triangle.
 
-=== 02_Hello_Rotating_Triangle.py ===
+### 02_Hello_Rotating_Triangle.py ###
 
 A large triangle, but this time, you can rotate it using the m and n keys. The rotation of the triangle is done within the shader.
 
-=== 03_Hello_Moving_Triangle.py ===
+### 03_Hello_Moving_Triangle.py ###
 
 Extension of 02, showing how to translate a set of vertices. 
 
-=== 04_Hello_Aspect_Ratio ===
+### 04_Hello_Aspect_Ratio.py ###
 
-How to correct the aspect ratio of the rendering to match that of the display.
+How to scale and correct the aspect ratio of the rendering to match that of the display.
 
 -------------------------------
 
-=== GLSL 'sandbox' ===
+## GLSL 'sandbox' ##
 
 "glsl_heroku_env.py" is an attempt to provide some support to running the shader examples from @mrdoob's GLSL sandbox: http://glsl.heroku.com/
 
@@ -36,8 +39,8 @@ python glsl_heroku_env.py raymarch.glsl
 Interactive:
 python -i glsl_heroku_env.py
 
->>> frag = """
 ```C
+>>> frag = """
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
@@ -65,11 +68,11 @@ void main()
 	gl_FragColor = vec4(colour, 1.0);
 
 }
-```
 """
 >>> run_shader(f)
 Compiled GL_VERTEX_SHADER shader
 Compiled GL_FRAGMENT_SHADER shader
+```
 
 [NB Press Ctrl-C to quit the render and get back to the commandline]
 
