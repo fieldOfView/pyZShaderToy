@@ -1,3 +1,8 @@
+/* Following iQ live coding tutorial on writing a basic raytracer http://www.youtube.com/watch?v=9g8CdctxmeU   @blurspline 
+  * ... this forked version mostly just scrunched up to fit in less space without obfuscating too much. @danbri */
+
+// from http://glsl.heroku.com/e#1339.15
+
 precision mediump float;
 uniform float time;
 uniform vec2 mouse, resolution;
