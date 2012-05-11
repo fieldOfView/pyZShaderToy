@@ -30,6 +30,10 @@ How to correct the aspect ratio of the rendering to match that of the display.
 
 Usage:
 
+Run a shader stored in a file:
+python glsl_heroku_env.py raymarch.glsl
+
+Interactive:
 python -i glsl_heroku_env.py
 
 >>> frag = """
