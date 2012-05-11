@@ -5,7 +5,7 @@ VERTEX_ARRAY = 0
 TEXCOORD_ARRAY = 1
 NORMAL_ARRAY = 2
 
-TEX_SIZE = 256
+TEX_SIZE = 128
 
 from pyopengles import *
 from utils import import_obj, PerspProjMat, reporterror, \
@@ -14,7 +14,7 @@ from utils import import_obj, PerspProjMat, reporterror, \
 
 PROJ_M = eglfloats(PerspProjMat(45.0, 1.3333,-1.0,1000.0))
 
-vertexStride = 8 * 4        # 5 * sizeof(GLfloat) -> vert x,y,z uv u,v
+vertexStride = 8 * 4        # 5 * sizeof(GLfloat) -> vert x,y,z,w  uv u,v
 
 """
 ///
@@ -44,9 +44,36 @@ def Init():
     uniform mediump vec3	myLightDirection;
     varying mediump float	varDot;
     varying mediump vec2	varCoord;
+
+    mat4 view_frustum(
+        float angle_of_view,
+        float aspect_ratio,
+        float z_near,
+        float z_far
+    ) {
+        return mat4(
+            vec4(1.0/tan(angle_of_view),           0.0, 0.0, 0.0),
+            vec4(0.0, aspect_ratio/tan(angle_of_view),  0.0, 0.0),
+            vec4(0.0, 0.0,    (z_far+z_near)/(z_far-z_near), 1.0),
+            vec4(0.0, 0.0, -2.0*z_far*z_near/(z_far-z_near), 0.0)
+        );
+    }
+
+    mat4 translate(float x, float y, float z)
+    {
+        return mat4(
+            vec4(1.0, 0.0, 0.0, 0.0),
+            vec4(0.0, 1.0, 0.0, 0.0),
+            vec4(0.0, 0.0, 1.0, 0.0),
+            vec4(x,   y,   z,   1.0)
+        );
+    }
+
     void main(void)
     {
-        gl_Position = myPMVMatrix * myVertex;
+        gl_Position = view_frustum(radians(45.0), 4.0/3.0, 0.0, 50.0) 
+                      * translate(0.0, 0.0, 1.0)
+                      * myPMVMatrix * myVertex;
         varCoord = myUV.st;
         mediump vec3 transNormal = myModelViewIT * myNormal;
         varDot = max( dot(transNormal, myLightDirection), 0.0 );
@@ -98,8 +125,6 @@ def CreateTexture(programObject):
   opengles.glGenTextures(1, ctypes.byref(tex_handle))
   reporterror()
 
-  # Bind it to allow us to load data into it
-  opengles.glBindTexture(GL_TEXTURE_2D, tex_handle)
   reporterror()
 
   # Creates the data as a 32bits integer array (8bits per component)
@@ -198,17 +223,15 @@ def get_wavefront_obj(path):
 // Draw a VBO using the shader pair created in Init()
 //
 """
-def Draw(programObject, Vbo, idxs, rotation):
+def Draw(programObject, Vbo, idxs, rotation, lighting):
 
   # Clear the color buffer
   opengles.glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
 
-  opengles.glCullFace(GL_BACK)  
-
-  opengles.glEnable(GL_CULL_FACE)
   opengles.glEnable(GL_DEPTH_TEST)
   reporterror()
   
+
   sinr = math.sin(rotation)
   cosr = math.cos(rotation)
   
@@ -227,8 +250,11 @@ def Draw(programObject, Vbo, idxs, rotation):
   reporterror()
 
   location = opengles.glGetUniformLocation(programObject, "myLightDirection")
-  opengles.glUniform3f(location, eglfloat(0), eglfloat(0), eglfloat(1))
+  opengles.glUniform3f(location, eglfloat(1), eglfloat(2), eglfloat(2.0 - lighting))
+  location = opengles.glGetUniformLocation(programObject, "myLightDirection")
+  opengles.glUniform3f(location, eglfloat(1), eglfloat(2 - lighting), eglfloat(2.0 - lighting))
   reporterror()
+
 
   opengles.glBindBuffer(GL_ARRAY_BUFFER, Vbo)
 
@@ -270,23 +296,45 @@ if __name__ == "__main__":
     path = sys.argv[3]
   egl = EGL(w,h)
   programObj = Init()
+
+  openegl.glViewport(eglint(0), eglint(0), eglint(w), eglint(h))
+
+  openegl.glDepthRangef(eglfloat(-10.0), eglfloat(20.0))
+  reporterror()
+
+  #opengles.glFrontFace(GL_CCW)
+
+  opengles.glCullFace(GL_BACK)
+
+  opengles.glEnable(GL_CULL_FACE)
+  opengles.glEnable(GL_DEPTH_TEST)
+  reporterror()
+  
+  opengles.glDepthFunc(GL_LESS)
+  
   CreateTexture(programObj)
+
   #Vbo, idxs = create_triangle()
   Vbo, idxs = get_wavefront_obj(path)
+
   rotation = 0
   noofverts = 0
   noofverts_step = idxs / 100
   if noofverts_step == 0:
     noofverts_step = 1
   rotatestep = math.pi / 120
+  lighting = 0.0
   while 1:
     noofverts += noofverts_step
     rotation += rotatestep
     rotation %= math.pi * 2
     if (noofverts >= idxs):
-      Draw(programObj, Vbo, idxs, rotation)
+      Draw(programObj, Vbo, idxs, rotation, lighting)
     else:
-      Draw(programObj, Vbo, noofverts, rotation)
+      Draw(programObj, Vbo, noofverts, rotation, lighting)
     openegl.eglSwapBuffers(egl.display, egl.surface)
+
     time.sleep(0.02)
-    noofverts %= idxs * 3
+    noofverts %= idxs * 5
+    lighting += 0.01
+    lighting %= 4.0

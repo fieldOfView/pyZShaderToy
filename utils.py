@@ -108,9 +108,19 @@ afIdentity_m = eglfloats(( 1,0,0,0,
                          0,0,1,0,
                          0,0,0,1 ))
 
+def get_identity_matrix():
+  return eglfloats(( 1,0,0,0,
+                         0,1,0,0,
+                         0,0,1,0,
+                         0,0,0,1 ))
 
 def wavefront_obj_to_vbo(path, order=("v","uv","n")):
-  f, verts, uvs, normals = import_obj(path)
+  objects = import_obj(path)
+  # assume first object is the key:
+  return convert_obj_to_vbo(objects[0], order)
+
+def convert_obj_to_vbo(object, order=("v","uv","n")):
+  f, verts, uvs, normals = object.faces, object.verts, object.uvs, object.normals
   mapping = {'v':verts, 'uv':uvs, 'n':normals}
   # make a suitable vbo object -> (vert) x,y,z (uv) u,v (norm) x,y,z by default
   vbo_data = []
