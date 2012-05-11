@@ -200,14 +200,15 @@ class EGL(object):
 
     def load_shader ( self, shader_src, shader_type = GL_VERTEX_SHADER, verbose = False ):
         # Convert the src to the correct ctype, if not already done
-        if type(shader_src) == basestring:
-            shader_src = ctypes.c_char_p(shader_src)
+        c_shader_src = shader_src
+        if type(shader_src) == basestring or type(shader_src) == str:
+            c_shader_src = ctypes.c_char_p(shader_src)
 
         # Create a shader of the given type
         if verbose:
             print "Creating shader object"
         shader = opengles.glCreateShader(shader_type)
-        opengles.glShaderSource(shader, 1, ctypes.byref(shader_src), 0)
+        opengles.glShaderSource(shader, 1, ctypes.byref(c_shader_src), 0)
         opengles.glCompileShader(shader)
   
         compiled = eglint()
@@ -235,7 +236,7 @@ class EGL(object):
             self._show_shader_log()
         return shader
 
-    def get_program(vertex_shader_src, fragment_shader_src, bindings=[], verbose=False):
+    def get_program(self, vertex_shader_src, fragment_shader_src, bindings=[], verbose=False):
         # Load the vertex/fragment shaders (can throw a ShaderCompilationFailed exception)
         vertexShader = self.load_shader ( vertex_shader_src, GL_VERTEX_SHADER, verbose )
         fragmentShader = self.load_shader ( fragment_shader_src, GL_FRAGMENT_SHADER, verbose )
