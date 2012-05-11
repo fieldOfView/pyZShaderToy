@@ -37,6 +37,7 @@ Interactive:
 python -i glsl_heroku_env.py
 
 >>> frag = """
+```C
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
@@ -64,6 +65,7 @@ void main()
 	gl_FragColor = vec4(colour, 1.0);
 
 }
+```
 """
 >>> run_shader(f)
 Compiled GL_VERTEX_SHADER shader
