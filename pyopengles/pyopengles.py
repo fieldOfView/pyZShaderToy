@@ -18,7 +18,7 @@ from gl2 import *
 from gl2ext import *
 
 # Define verbose=True to get debug messages
-verbose = True
+verbose = False
 
 # Define some extra constants that the automatic extraction misses
 EGL_DEFAULT_DISPLAY = 0
@@ -198,14 +198,14 @@ class EGL(object):
         opengles.glGetProgramInfoLog(program,N,ctypes.byref(loglen),ctypes.byref(log))
         print log.value
 
-    def load_shader ( self, shader_src, shader_type = GL_VERTEX_SHADER, verbose = False ):
+    def load_shader ( self, shader_src, shader_type = GL_VERTEX_SHADER, quiet = True ):
         # Convert the src to the correct ctype, if not already done
         c_shader_src = shader_src
         if type(shader_src) == basestring or type(shader_src) == str:
             c_shader_src = ctypes.c_char_p(shader_src)
 
         # Create a shader of the given type
-        if verbose:
+        if not quiet:
             print "Creating shader object"
         shader = opengles.glCreateShader(shader_type)
         opengles.glShaderSource(shader, 1, ctypes.byref(c_shader_src), 0)
@@ -231,15 +231,15 @@ class EGL(object):
                 shdtyp = "GL_VERTEX_SHADER"
             elif shader_type == GL_FRAGMENT_SHADER:
                 shdtyp = "GL_FRAGMENT_SHADER"
-            print "Compiled %s shader: %s" % (shdtyp, shader_src)
-        if verbose:
+            print "Compiled %s shader" % (shdtyp)
+        if not quiet:
             self._show_shader_log()
         return shader
 
-    def get_program(self, vertex_shader_src, fragment_shader_src, bindings=[], verbose=False):
+    def get_program(self, vertex_shader_src, fragment_shader_src, bindings=[], quiet=True):
         # Load the vertex/fragment shaders (can throw a ShaderCompilationFailed exception)
-        vertexShader = self.load_shader ( vertex_shader_src, GL_VERTEX_SHADER, verbose )
-        fragmentShader = self.load_shader ( fragment_shader_src, GL_FRAGMENT_SHADER, verbose )
+        vertexShader = self.load_shader ( vertex_shader_src, GL_VERTEX_SHADER, quiet )
+        fragmentShader = self.load_shader ( fragment_shader_src, GL_FRAGMENT_SHADER, quiet )
         self._check_glerror()
 
         # Create the program object
@@ -263,8 +263,7 @@ class EGL(object):
         if not (self._check_Linked_status(programObject)):
             print "Couldn't link the shaders to the program object. Check the bindings and shader sourcefiles."
             raise Exception
-        if verbose:
+        if not quiet:
             self._show_program_log(programObject)
         return programObject
-
 
