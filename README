@@ -1,8 +1,38 @@
-Raspberry Pi 3d demo.
+== Raspberry Pi 3d demo. ==
 
-This uses the EGL and OpenGLES libraries to draw 3d graphics from inside Python with hardware acceleration.
+This uses the peterderivaz's bindings to the EGL and OpenGLES libraries to draw 3d graphics from inside Python with hardware acceleration (via ctypes and ctypes.CDLL)
 
-USAGE
+I wrote the 'Hello_*' scripts as a learning tool for myself and they are quite rough around the edges. I would appreciate any feedback/patches to make them better!
+
+=== Hello_Triangle.py ===
+
+A large red triangle.
+
+This script shows the minimum setup required to use OpenGL ES 2.0, from getting a display, loading shaders, linking and creating a (small) Vertex Buffer Object (VBO) for the triangle.
+
+=== Hello_Textured_Triangle.py ===
+
+A large triangle, but this time, coloured based on a 2D Texture (procedurally generated here.)
+
+=== Hello_Monkey.py ===
+
+Load vertexes and UV coordinates from a .obj file into a VBO and display it, using the texture colour from above.
+
+Usage: python Hello_Monkey.py /path/to/.obj/file
+
+=== Hello_Lighting.py ===
+
+Same as Hello_monkey, but the vert/fragment shaders provide a basic Texture and Lighting setup with one global light source.
+
+-------------------------------
+
+Forked from @peterderivaz's pyopengles bindings, which have been made into a loadable module in pyopengles.
+
+-------------------------------
+
+USAGE: (in pyopengles)
+
+python pyopengles.py
 
 EXAMPLE A) Draw a Mandelbrot.  Use mouse to scroll and view Julia sets.  Press mouse button to quit.
 
