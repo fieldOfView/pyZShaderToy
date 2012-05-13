@@ -33,15 +33,18 @@ How to scale and correct the aspect ratio of the rendering to match that of the 
 
 ## GLSL 'sandbox' ##
 
-"glsl_heroku_env.py" is an attempt to provide some support to running the shader examples from @mrdoob's GLSL sandbox: http://glsl.heroku.com/
+"glsl_sandbox.sh" is an attempt to provide some support to running the shader examples from @mrdoob's GLSL sandbox: http://glsl.heroku.com/ and uses 'nano' (and pyinotify) to allow for live updates.
+
+Prerequisites:
+sudo apt-get install python-pyinotify
 
 Usage:
 
 Run a shader stored in a file:
-python glsl_heroku_env.py raymarch.glsl
+bash glsl_sandbox.sh leds.glsl
 
 Interactive:
-python -i glsl_heroku_env.py
+python -i env_glsl.py
 
 ```C
 >>> frag = """
