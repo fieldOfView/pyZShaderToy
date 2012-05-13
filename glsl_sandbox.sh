@@ -1,5 +1,13 @@
 #!/bin/bash
-echo "Opening $1"
+
+if [ -f $1 ]
+then
+  echo "Opening $1"
+else
+  echo "Creating a shader in '$1' from the template shader."
+  cp default.template.glsl $1
+fi
+
 python env_glsl.py $1 &
 nano $1
 kill %1
