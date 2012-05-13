@@ -1,4 +1,40 @@
 from pyopengles import *
+import os.path, pyinotify
+
+file_changed = 0
+
+# File watcher for live updates
+class FileWatcher(object):
+  def __init__(self, file_list):
+    self.file_list = set([os.path.abspath(f) for f in file_list])
+    self.watch_dirs = set([os.path.dirname(f) for f in self.file_list])
+    self.file_changed = 0
+
+  def handler(self, event):
+    if event.pathname in self.file_list:
+      self.file_changed = 1
+      #print "Event: ", event.maskname, ", triggered by: ", event.pathname
+
+  def start(self):
+    handler = self.handler
+    class EventHandler(pyinotify.ProcessEvent):
+      def process_default(self, event):
+        handler(event)
+
+    wm = pyinotify.WatchManager()  # Watch Manager
+
+    mask = pyinotify.IN_MODIFY
+
+    ev = EventHandler()
+    self.notifier = pyinotify.ThreadedNotifier(wm, ev)
+
+    for watch_this in self.watch_dirs:
+      wm.add_watch(watch_this, mask, rec=True)
+
+    self.notifier.start()
+
+  def stop(self):
+    self.notifier.stop()
 
 _v_src = """attribute vec3 position;
            void main() {
@@ -28,7 +64,7 @@ void main( void ) {
 	gl_FragColor = vec4(fract(-log(s)*10.),fract(-log(s)*1.),fract(-log(s)/10.),1.);
 }"""
 
-e = EGL() # fullscreen, RGBA
+e = EGL(alpha_flags=1<<16) # fullscreen, RGBA, alpha-PREMULT flag on
 #e=EGL(pref_width = 640, pref_height=480)
 
 surface_tris = eglfloats( (  - 1.0, - 1.0, 1.0, 
@@ -92,6 +128,11 @@ def run_shader(frag_shader):
           self.finished = False
       m = FakeM(400,300)
 
+    _v_src = """attribute vec3 position;
+           void main() {
+              gl_Position = vec4( position, 1.0 );
+           }"""
+
     vertexShader = e.load_shader(_v_src, GL_VERTEX_SHADER )
     fragmentShader = e.load_shader(frag_shader, GL_FRAGMENT_SHADER)
     # Create the program object
@@ -142,6 +183,9 @@ def run_shader(frag_shader):
     while(1):
       draw(programObject, (time.time() - start), m, r, Vbo)
       time.sleep(0.02)
+      if fw.file_changed:
+        break
+    del programObject, vertexShader, fragmentShader
   except KeyboardInterrupt:
     print "Finishing"
     m.finished = True
@@ -160,10 +204,18 @@ def run_shader(frag_shader):
 if __name__ == "__main__":
   import sys
   if len(sys.argv) == 2:
+    fw=FileWatcher([sys.argv[1]])
+    fw.start()
     try:
-      glsl_file = open(sys.argv[1], "r")
-      frag = glsl_file.read()
-      run_shader(frag)
+      while(True):
+        fw.file_changed=0
+        glsl_file = open(sys.argv[1], "r")
+        frag = glsl_file.read()
+        glsl_file.close()
+        run_shader(frag)
     except IOError:
       print "No such file"
+    except KeyboardInterrupt:
+      fw.stop()
+
 

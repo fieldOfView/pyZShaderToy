@@ -45,6 +45,35 @@ eglfloat = ctypes.c_float
 def eglfloats(L):
     return (eglfloat*len(L))(*L)
                 
+class Alpha_struct(ctypes.Structure):
+  """typedef enum {
+  /* Bottom 2 bits sets the alpha mode */
+  DISPMANX_FLAGS_ALPHA_FROM_SOURCE = 0,
+  DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS = 1,
+  DISPMANX_FLAGS_ALPHA_FIXED_NON_ZERO = 2,
+  DISPMANX_FLAGS_ALPHA_FIXED_EXCEED_0X07 = 3,
+
+  DISPMANX_FLAGS_ALPHA_PREMULT = 1 << 16,
+  DISPMANX_FLAGS_ALPHA_MIX = 1 << 17
+} DISPMANX_FLAGS_ALPHA_T;
+
+typedef struct {
+  DISPMANX_FLAGS_ALPHA_T flags;
+  uint32_t opacity;
+  VC_IMAGE_T *mask;
+} DISPMANX_ALPHA_T;
+
+typedef struct {
+  DISPMANX_FLAGS_ALPHA_T flags;
+  uint32_t opacity;
+  DISPMANX_RESOURCE_HANDLE_T mask;
+} VC_DISPMANX_ALPHA_T;  /* for use with vmcs_host */
+
+"""
+  _fields_ = [ ("flags", ctypes.c_long),
+               ("opacity", ctypes.c_ulong),
+               ("mask", ctypes.c_ulong)]
+
 def check(e):
     """Checks that error is zero"""
     if e==0: return
@@ -80,8 +109,9 @@ class GLError(Exception):
 class EGL(object):
 
     def __init__(self, pref_width=None, pref_height=None, 
-    				   red_size=8, green_size=8,blue_size=8,
-    				   alpha_size=8, depth_size=None, other_attribs = []):
+               red_size=8, green_size=8,blue_size=8,
+               alpha_size=8, depth_size=None, 
+               layer=0, alpha_flags=0, alpha_opacity=0, other_attribs = []):
         """Opens up the OpenGL library and prepares a window for display"""
         b = bcm.bcm_host_init()
         assert b==0
@@ -141,11 +171,13 @@ class EGL(object):
         src_rect = eglints( (0,0,width.value<<16, height.value<<16) )
         assert dispman_update
         assert dispman_display
+        alpha_s = Alpha_struct(alpha_flags, alpha_opacity, 0)
+
         dispman_element = bcm.vc_dispmanx_element_add ( dispman_update, dispman_display,
-                                  0, ctypes.byref(dst_rect), 0,
+                                  layer, ctypes.byref(dst_rect), 0,
                                   ctypes.byref(src_rect),
                                   DISPMANX_PROTECTION_NONE,
-                                  0 , 0, 0)
+                                  alpha_s , 0, 0)
         bcm.vc_dispmanx_update_submit_sync( dispman_update )
         nativewindow = eglints((dispman_element,width,height));
         nw_p = ctypes.pointer(nativewindow)
@@ -225,7 +257,7 @@ class EGL(object):
             opengles.glGetShaderInfoLog(shader, loglength, ctypes.byref(charswritten), logmsg)
             print logmsg.value
             raise ShaderCompilationFailed(logmsg.value)
-        else:
+        elif not quiet:
             shdtyp = "{unknown}"
             if shader_type == GL_VERTEX_SHADER:
                 shdtyp = "GL_VERTEX_SHADER"
