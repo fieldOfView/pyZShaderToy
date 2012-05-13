@@ -8,6 +8,6 @@ else
   cp default.template.glsl $1
 fi
 
-python env_glsl.py $1 &
+python env_glsl.py $1 &>/dev/null &
 nano $1
 kill %1

@@ -120,7 +120,8 @@ def run_shader(frag_shader):
   try:
     try:
       m = start_mouse()
-    except:
+    except Exception, err:
+      print err
       class FakeM():
         def __init__(self, x,y):
           self.x = x
@@ -212,10 +213,12 @@ if __name__ == "__main__":
         glsl_file = open(sys.argv[1], "r")
         frag = glsl_file.read()
         glsl_file.close()
-        run_shader(frag)
+        try:
+          run_shader(frag)
+        except:
+          time.sleep(3)
     except IOError:
       print "No such file"
-    except KeyboardInterrupt:
-      fw.stop()
+  fw.stop()
 
 
