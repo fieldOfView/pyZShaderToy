@@ -12,10 +12,24 @@
 import ctypes
 import time
 import math
+import sys
 # Pick up our constants extracted from the header files with prepare_constants.py
-from egl import *
-from gl2 import *
-from gl2ext import *
+from .egl import *
+from .gl2 import *
+from .gl2ext import *
+
+# Python3 compatibility
+try:
+  basestring
+except NameError:
+  basestring = str
+
+
+def b(s):
+    if sys.version.startswith("3"):
+        return s.encode("latin-1")
+    else:
+        return s
 
 # Define verbose=True to get debug messages
 verbose = False
@@ -78,7 +92,7 @@ def check(e):
     """Checks that error is zero"""
     if e==0: return
     if verbose:
-        print 'Error code',hex(e&0xffffffff)
+        print ('Error code %s' % hex(e&0xffffffff))
     raise ValueError
 
 class ShaderCompilationFailed(Exception):
@@ -147,7 +161,7 @@ class EGL(object):
         r = openegl.eglBindAPI(EGL_OPENGL_ES_API)
         assert r
         if verbose:
-            print 'numconfig=',numconfig
+            print ('numconfig=',numconfig)
         context_attribs = eglints( (EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE) )
         self.context = openegl.eglCreateContext(self.display, config,
                                         EGL_NO_CONTEXT,
@@ -193,18 +207,18 @@ class EGL(object):
         opengles.glGetProgramiv ( programObject, GL_LINK_STATUS, ctypes.byref(linked))
         try:
             self._check_glerror()
-        except GLError, e:
-            print e
+        except GLError as e:
+            print (e)
             return False
 
         if (linked.value == 0):
-            print "Linking failed!"
+            print ("Linking failed!")
             loglength = eglint()
             charswritten = eglint()
             opengles.glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-            logmsg = ctypes.c_char_p(" "*loglength.value)
+            logmsg = ctypes.c_char_p(b(" "*loglength.value))
             opengles.glGetProgramInfoLog(programObject, loglength, ctypes.byref(charswritten), logmsg)
-            print logmsg.value
+            print (logmsg.value)
             return False
         return True
     
@@ -220,7 +234,7 @@ class EGL(object):
         log=(ctypes.c_char*N)()
         loglen=ctypes.c_int()
         opengles.glGetShaderInfoLog(shader,N,ctypes.byref(loglen),ctypes.byref(log))
-        print log.value
+        print (log.value)
         
     def _show_program_log(self, program):
         """Prints the compile log for a program"""
@@ -228,17 +242,17 @@ class EGL(object):
         log=(ctypes.c_char*N)()
         loglen=ctypes.c_int()
         opengles.glGetProgramInfoLog(program,N,ctypes.byref(loglen),ctypes.byref(log))
-        print log.value
+        print (log.value)
 
     def load_shader ( self, shader_src, shader_type = GL_VERTEX_SHADER, quiet = True ):
         # Convert the src to the correct ctype, if not already done
         c_shader_src = shader_src
         if type(shader_src) == basestring or type(shader_src) == str:
-            c_shader_src = ctypes.c_char_p(shader_src)
+            c_shader_src = ctypes.c_char_p(b(shader_src))
 
         # Create a shader of the given type
         if not quiet:
-            print "Creating shader object"
+            print ("Creating shader object")
         shader = opengles.glCreateShader(shader_type)
         opengles.glShaderSource(shader, 1, ctypes.byref(c_shader_src), 0)
         opengles.glCompileShader(shader)
@@ -249,13 +263,13 @@ class EGL(object):
         opengles.glGetShaderiv ( shader, GL_COMPILE_STATUS, ctypes.byref(compiled) )
 
         if (compiled.value == 0):
-            print "Failed to compile shader '%s'" % shader_src 
+            print ("Failed to compile shader '%s'" % shader_src) 
             loglength = eglint()
             charswritten = eglint()
             opengles.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-            logmsg = ctypes.c_char_p(" "*loglength.value)
+            logmsg = ctypes.c_char_p(b(" "*loglength.value))
             opengles.glGetShaderInfoLog(shader, loglength, ctypes.byref(charswritten), logmsg)
-            print logmsg.value
+            print (logmsg.value)
             raise ShaderCompilationFailed(logmsg.value)
         elif not quiet:
             shdtyp = "{unknown}"
@@ -263,7 +277,7 @@ class EGL(object):
                 shdtyp = "GL_VERTEX_SHADER"
             elif shader_type == GL_FRAGMENT_SHADER:
                 shdtyp = "GL_FRAGMENT_SHADER"
-            print "Compiled %s shader" % (shdtyp)
+            print ("Compiled %s shader" % shdtyp)
         if not quiet:
             self._show_shader_log()
         return shader
@@ -293,7 +307,7 @@ class EGL(object):
 
         # Check the link status
         if not (self._check_Linked_status(programObject)):
-            print "Couldn't link the shaders to the program object. Check the bindings and shader sourcefiles."
+            print ("Couldn't link the shaders to the program object. Check the bindings and shader sourcefiles.")
             raise Exception
         if not quiet:
             self._show_program_log(programObject)

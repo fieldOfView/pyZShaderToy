@@ -1,2 +1,2 @@
-from pyopengles import *
-from pymouse import *
+from .pyopengles import *
+from .pymouse import *
