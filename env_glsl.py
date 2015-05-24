@@ -1,45 +1,4 @@
 from pyopengles import *
-import os.path, pyinotify
-
-file_changed = 0
-
-# File watcher for live updates
-class FileWatcher(object):
-  def __init__(self, file_list):
-    self.file_list = set([os.path.abspath(f) for f in file_list])
-    self.watch_dirs = set([os.path.dirname(f) for f in self.file_list])
-    self.file_changed = 0
-
-  def handler(self, event):
-    if event.pathname in self.file_list:
-      self.file_changed = 1
-      #print "Event: ", event.maskname, ", triggered by: ", event.pathname
-
-  def start(self):
-    handler = self.handler
-    class EventHandler(pyinotify.ProcessEvent):
-      def process_default(self, event):
-        handler(event)
-
-    wm = pyinotify.WatchManager()  # Watch Manager
-
-    mask = pyinotify.IN_MODIFY
-
-    ev = EventHandler()
-    self.notifier = pyinotify.ThreadedNotifier(wm, ev)
-
-    for watch_this in self.watch_dirs:
-      wm.add_watch(watch_this, mask, rec=True)
-
-    self.notifier.start()
-
-  def stop(self):
-    self.notifier.stop()
-
-_v_src = """attribute vec3 position;
-           void main() {
-              gl_Position = vec4( position, 1.0 );
-           }"""
 
 example_frag = """precision mediump float;
 uniform float time_ms;
@@ -118,16 +77,11 @@ def draw(programObject,time_ms, m, r, Vbo):
 
 def run_shader(frag_shader):
   try:
-    try:
-      m = start_mouse()
-    except Exception, err:
-      print err
-      class FakeM():
-        def __init__(self, x,y):
-          self.x = x
-          self.y = y
-          self.finished = False
-      m = FakeM(400,300)
+    class FakeM():
+      def __init__(self, x,y):
+        self.x = x
+        self.y = y
+    m = FakeM(400,300)
 
     _v_src = """attribute vec3 position;
            void main() {
@@ -154,7 +108,7 @@ def run_shader(frag_shader):
     if not (e._check_Linked_status(programObject)):
       print "Couldn't link the shaders to the program object. Check the bindings and shader sourcefiles."
       raise Exception
-   
+
     opengles.glClearColor ( eglfloat(0.3), eglfloat(0.3), eglfloat(0.5), eglfloat(1.0) )
     e._check_glerror()
 
@@ -166,14 +120,14 @@ def run_shader(frag_shader):
 
     opengles.glGenBuffers(1, ctypes.byref(Vbo))
     e._check_glerror()
-  
+
     opengles.glBindBuffer(GL_ARRAY_BUFFER, Vbo)
     e._check_glerror()
 
     # Set the buffer's data
     opengles.glBufferData(GL_ARRAY_BUFFER, 4 * 6 * 3, surface_tris, GL_STATIC_DRAW)
     e._check_glerror()
-  
+
     # Unbind the VBO
     opengles.glBindBuffer(GL_ARRAY_BUFFER, 0)
     e._check_glerror()
@@ -182,43 +136,32 @@ def run_shader(frag_shader):
     start = time.time()
     r = (eglfloat(e.width.value), eglfloat(e.height.value))
     while(1):
-      draw(programObject, (time.time() - start), m, r, Vbo)
-      time.sleep(0.02)
-      if fw.file_changed:
+      try:
+        draw(programObject, (time.time() - start), m, r, Vbo)
+        time.sleep(0.02)
+      except KeyboardInterrupt:
+        print "Finishing"
+        opengles.glClearColor ( eglfloat(0.0), eglfloat(0.0), eglfloat(0.0), eglfloat(0.0) )
+        opengles.glClear ( GL_COLOR_BUFFER_BIT )
+        opengles.eglSwapBuffers(e.display, e.surface)
         break
     del programObject, vertexShader, fragmentShader
-  except KeyboardInterrupt:
-    print "Finishing"
-    m.finished = True
-    opengles.glClearColor ( eglfloat(0.0), eglfloat(0.0), eglfloat(0.0), eglfloat(0.0) )
-    opengles.glClear ( GL_COLOR_BUFFER_BIT )
-    openegl.eglSwapBuffers(e.display, e.surface)
-    return
+
   except Exception, error:
     print "Error - finishing"
     opengles.glClearColor ( eglfloat(0.0), eglfloat(0.0), eglfloat(0.0), eglfloat(0.0) )
     opengles.glClear ( GL_COLOR_BUFFER_BIT )
-    openegl.eglSwapBuffers(e.display, e.surface)
-    m.finished = True
+    opengles.eglSwapBuffers(e.display, e.surface)
     raise error
-    
+
 if __name__ == "__main__":
   import sys
+
+  frag = example_frag
   if len(sys.argv) == 2:
-    fw=FileWatcher([sys.argv[1]])
-    fw.start()
-    try:
-      while(True):
-        fw.file_changed=0
-        glsl_file = open(sys.argv[1], "r")
-        frag = glsl_file.read()
-        glsl_file.close()
-        try:
-          run_shader(frag)
-        except:
-          time.sleep(3)
-    except IOError:
-      print "No such file"
-  fw.stop()
+    glsl_file = open(sys.argv[1], "r")
+    frag = glsl_file.read()
+    glsl_file.close()
 
-
+  run_shader(frag)
+  del e
