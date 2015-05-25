@@ -35,6 +35,7 @@ def b(s):
 verbose = False
 
 # Define some extra constants that the automatic extraction misses
+GL_NO_ERROR = 0
 EGL_DEFAULT_DISPLAY = 0
 EGL_NO_CONTEXT = 0
 EGL_NO_DISPLAY = 0

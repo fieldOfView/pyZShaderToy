@@ -99,35 +99,40 @@ class ShaderToy():
             fragmentShader = self.egl.load_shader(frag_shader, GL_FRAGMENT_SHADER)
 
             # Create the program object
-            del self.programObject
-            self.programObject = opengles.glCreateProgram ( )
+            programObject = opengles.glCreateProgram ( )
 
-            opengles.glAttachShader ( self.programObject, vertexShader )
-            opengles.glAttachShader ( self.programObject, fragmentShader )
+            opengles.glAttachShader ( programObject, vertexShader )
+            opengles.glAttachShader ( programObject, fragmentShader )
             self.egl._check_glerror()
 
-            opengles.glBindAttribLocation ( self.programObject, 0, "position" )
+            opengles.glBindAttribLocation ( programObject, 0, "position" )
             self.egl._check_glerror()
 
             # Link the program
-            opengles.glLinkProgram ( self.programObject )
+            opengles.glLinkProgram ( programObject )
             self.egl._check_glerror()
 
             # Check the link status
-            if not (self.egl._check_Linked_status(self.programObject)):
+            if not (self.egl._check_Linked_status(programObject)):
                 print ("Couldn't link the shaders to the program object. Check the bindings and shader sourcefiles.")
                 raise (Exception)
+
+            del self.programObject
+            self.programObject = programObject
 
             opengles.glUseProgram( self.programObject )
             self.egl._check_glerror()
 
             del vertexShader, fragmentShader
+
         except Exception as error:
-            print ("Error loading shader")
             # only stop if there is no previously created shader
             if not self.programObject:
+                print ("Error loading shader.")
                 self.stop()
                 raise error
+            else:
+                print ("Error loading new shader. Using previous shader")
 
 
     def draw(self):
