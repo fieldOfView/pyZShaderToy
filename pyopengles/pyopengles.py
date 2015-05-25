@@ -42,9 +42,13 @@ EGL_NO_SURFACE = 0
 DISPMANX_PROTECTION_NONE = 0
 
 # Open the libraries
-bcm = ctypes.CDLL('libbcm_host.so')
-opengles = ctypes.CDLL('libGLESv2.so')
-openegl = ctypes.CDLL('libEGL.so')
+try:
+    bcm = ctypes.CDLL('libbcm_host.so')
+    opengles = ctypes.CDLL('libGLESv2.so')
+    openegl = ctypes.CDLL('libEGL.so')
+except OSError:
+    print("Could not open Raspberry Pi libraries.")
+    raise(OSError)
 
 eglint = ctypes.c_int
 
