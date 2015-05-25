@@ -25,10 +25,11 @@ except NameError:
   basestring = str
 
 
-def b(s):
-    if sys.version.startswith("3"):
+if sys.version.startswith("3"):
+    def b(s):
         return s.encode("latin-1")
-    else:
+else:
+    def b(s):
         return s
 
 # Define verbose=True to get debug messages
