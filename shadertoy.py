@@ -16,7 +16,7 @@ class ShaderToy():
     uniform vec2 resolution;
 
     void main(void) {
-        gl_FragColor = vec4(1.,0.,0.,1.);
+        gl_FragColor = vec4(0.2,0.2,0.2,1.);
     }"""
 
     surface_tris = eglfloats( (  - 1.0, - 1.0, 1.0,
@@ -40,6 +40,7 @@ class ShaderToy():
 
         self.setupEGL()
         self.loadShader(self.empty_frag)
+        self.timeoffset = time.time()
 
 
     def run(self):
@@ -48,7 +49,7 @@ class ShaderToy():
             try:
                 self.draw()
                 time.sleep(0.02)
-            except KeyboardInterrupt:
+            except (KeyboardInterrupt, SystemExit):
                 print ("Finishing")
                 self.stop()
                 break
@@ -84,7 +85,6 @@ class ShaderToy():
             opengles.glBindBuffer(GL_ARRAY_BUFFER, 0)
             self.egl._check_glerror()
 
-            self.start = time.time()
             self.resolution = (eglfloat(self.egl.width.value), eglfloat(self.egl.height.value))
 
         except Exception as error:
@@ -94,13 +94,12 @@ class ShaderToy():
 
 
     def loadShader(self, frag_shader):
-        del self.programObject
-
         try:
             vertexShader = self.egl.load_shader(self.vert_shader, GL_VERTEX_SHADER )
             fragmentShader = self.egl.load_shader(frag_shader, GL_FRAGMENT_SHADER)
 
             # Create the program object
+            del self.programObject
             self.programObject = opengles.glCreateProgram ( )
 
             opengles.glAttachShader ( self.programObject, vertexShader )
@@ -125,12 +124,14 @@ class ShaderToy():
             del vertexShader, fragmentShader
         except Exception as error:
             print ("Error loading shader")
-            self.stop()
-            raise error
+            # only stop if there is no previously created shader
+            if not self.programObject:
+                self.stop()
+                raise error
 
 
     def draw(self):
-        time_ms = time.time() - self.start
+        time_ms = time.time() - self.timeoffset
 
         opengles.glClear ( GL_COLOR_BUFFER_BIT )
 
