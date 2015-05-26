@@ -8,9 +8,8 @@ from shadertoy import ShaderToy
 
 class ShaderToyNode(ZOCP):
     # Constructor
-    def __init__(self, nodename=""):
-        super(ShaderToyNode, self).__init__()
-        self.set_name(nodename)
+    def __init__(self, nodename):
+        super(ShaderToyNode, self).__init__(nodename)
 
         self.shadertoy = ShaderToy()
         self.shadertoy.setupEGL()
