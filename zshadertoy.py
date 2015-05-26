@@ -12,7 +12,7 @@ class ShaderToyNode(ZOCP):
         super(ShaderToyNode, self).__init__(nodename)
 
         self.shadertoy = ShaderToy()
-        self.shadertoy.setupEGL()
+        #self.shadertoy.setupEGL()
         self.fragment_shader = self.shadertoy.empty_frag
         self.timeoffset = self.shadertoy.timeoffset
         self.mouse = [self.shadertoy.mouse.x, self.shadertoy.mouse.y]
@@ -23,7 +23,7 @@ class ShaderToyNode(ZOCP):
 
         while True:
             try:
-                self.run_once()
+                self.run_once(0)
                 self.shadertoy.draw()
             except (KeyboardInterrupt, SystemExit):
                 break
