@@ -11,7 +11,7 @@ class ShaderToy():
 
 
     empty_frag = """precision mediump float;
-    uniform float time_ms;
+    uniform float time;
     uniform vec2 mouse;
     uniform vec2 resolution;
 
@@ -105,7 +105,7 @@ class ShaderToy():
             opengles.glAttachShader ( programObject, fragmentShader )
             self.egl._check_glerror()
 
-            opengles.glBindAttribLocation ( programObject, 0, "position" )
+            opengles.glBindAttribLocation ( programObject, 0, eglb("position") )
             self.egl._check_glerror()
 
             # Link the program
@@ -136,19 +136,19 @@ class ShaderToy():
 
 
     def draw(self):
-        time_ms = time.time() - self.timeoffset
+        shader_time = time.time() - self.timeoffset
 
         opengles.glClear ( GL_COLOR_BUFFER_BIT )
 
-        location = opengles.glGetUniformLocation(self.programObject, "time")
-        opengles.glUniform1f(location, eglfloat(time_ms))
+        location = opengles.glGetUniformLocation(self.programObject, eglb("time"))
+        opengles.glUniform1f(location, eglfloat(shader_time))
         try:
             self.egl._check_glerror()
         except GLError as error:
             print ("Error setting time uniform var")
             print (error)
 
-        location = opengles.glGetUniformLocation(self.programObject, "mouse")
+        location = opengles.glGetUniformLocation(self.programObject, eglb("mouse"))
         opengles.glUniform2f(location, eglfloat(float(self.mouse.x) / self.resolution[0].value), eglfloat(float(self.mouse.y) / self.resolution[1].value))
         try:
             self.egl._check_glerror()
@@ -156,7 +156,7 @@ class ShaderToy():
             print ("Error setting mouse uniform var")
             print (error)
 
-        location = opengles.glGetUniformLocation(self.programObject, "resolution")
+        location = opengles.glGetUniformLocation(self.programObject, eglb("resolution"))
         opengles.glUniform2f(location, self.resolution[0], self.resolution[1])
         try:
             self.egl._check_glerror()

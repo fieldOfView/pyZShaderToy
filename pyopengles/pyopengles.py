@@ -26,10 +26,10 @@ except NameError:
 
 
 if sys.version.startswith("3"):
-    def b(s):
+    def eglb(s):
         return s.encode("latin-1")
 else:
-    def b(s):
+    def eglb(s):
         return s
 
 # Define verbose=True to get debug messages
@@ -222,7 +222,7 @@ class EGL(object):
             loglength = eglint()
             charswritten = eglint()
             opengles.glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-            logmsg = ctypes.c_char_p(b(" "*loglength.value))
+            logmsg = ctypes.c_char_p(eglb(" "*loglength.value))
             opengles.glGetProgramInfoLog(programObject, loglength, ctypes.byref(charswritten), logmsg)
             print (logmsg.value)
             return False
@@ -254,7 +254,7 @@ class EGL(object):
         # Convert the src to the correct ctype, if not already done
         c_shader_src = shader_src
         if type(shader_src) == basestring or type(shader_src) == str:
-            c_shader_src = ctypes.c_char_p(b(shader_src))
+            c_shader_src = ctypes.c_char_p(eglb(shader_src))
 
         # Create a shader of the given type
         if not quiet:
@@ -273,7 +273,7 @@ class EGL(object):
             loglength = eglint()
             charswritten = eglint()
             opengles.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, ctypes.byref(loglength))
-            logmsg = ctypes.c_char_p(b(" "*loglength.value))
+            logmsg = ctypes.c_char_p(eglb(" "*loglength.value))
             opengles.glGetShaderInfoLog(shader, loglength, ctypes.byref(charswritten), logmsg)
             print (logmsg.value)
             raise ShaderCompilationFailed(logmsg.value)
